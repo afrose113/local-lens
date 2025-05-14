@@ -6,27 +6,28 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  if (req.method !== 'GET') {
+  if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method not allowed' });
   }
 
   try {
-    const userId = req.query.userId as string;
-
-    // Await the MongoClient
     const client: MongoClient = await dbConnect;
+    const db = client.db(); // or client.db("localnews")
 
-    // Access the specific DB — use your database name if needed
-    const db = client.db(); // Or db('localnews') if you want to be explicit
+    const { userId, title, url, source, location, savedAt } = req.body;
 
-    const articles = await db.collection('savedArticles')
-      .find({ userId })
-      .sort({ savedAt: -1 })
-      .toArray();
+    const result = await db.collection('savedArticles').insertOne({
+      userId,
+      title,
+      url,
+      source,
+      location,
+      savedAt: new Date(savedAt),
+    });
 
-    return res.status(200).json(articles);
+    return res.status(201).json({ message: 'Article saved', id: result.insertedId });
   } catch (error) {
-    console.error('Database error:', error);
+    console.error('Save article error:', error);
     return res.status(500).json({ message: 'Internal server error' });
   }
 }
