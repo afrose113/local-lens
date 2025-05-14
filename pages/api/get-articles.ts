@@ -1,6 +1,6 @@
-// pages/api/get-articles.ts
-import { NextApiRequest, NextApiResponse } from 'next';
-import  dbConnect  from '@/lib/dbConnect';
+import type { NextApiRequest, NextApiResponse } from 'next';
+import dbConnect from '@/lib/dbConnect';
+import { MongoClient } from 'mongodb';
 
 export default async function handler(
   req: NextApiRequest,
@@ -12,8 +12,13 @@ export default async function handler(
 
   try {
     const userId = req.query.userId as string;
-    const db = await dbConnect();
-    
+
+    // Await the MongoClient
+    const client: MongoClient = await dbConnect;
+
+    // Access the specific DB — use your database name if needed
+    const db = client.db(); // Or db('localnews') if you want to be explicit
+
     const articles = await db.collection('savedArticles')
       .find({ userId })
       .sort({ savedAt: -1 })
